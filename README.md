@@ -113,7 +113,7 @@ vi Makefile.config
 - 解注释`WITH_PYTHON_LAYER := 1`
 - LIBRARY_DIRS := $(PYTHON_LIB) /usr/local/lib /usr/lib /usr/lib/x86_64-linux-gnu
 
-**完整[Makefile.config](./Makefile.config)文件**
+**完整的[Makefile.config](./Makefile.config)文件**
 
 ```shell
 make clean  # 如果之前编译过的话，清除掉
@@ -132,6 +132,53 @@ source ~/.bashrc
 ```
 然后打开python，输入import caffe，没有报错就安装成功了
 
+~~不放心的~~还可以跑个mnist：
+```sh
+cd /home/caffe
+sh data/mnist/get_mnist.sh
+sh examples/mnist/create_mnist.sh
+sh examples/mnist/train_lenet.sh
+```
+
+## 6.安装ssd
+直接把caffe的Makefile.config复制到ssd的目录下make时会报以下错误：
+```
+...
+.build_release/lib/libcaffe.so: undefined reference to `boost::re_detail::cpp_regex_traits_implementation<char>::transform_primary(char const*, char const*) const'
+.build_release/lib/libcaffe.so: undefined reference to `boost::re_detail::cpp_regex_traits_implementation<char>::transform(char const*, char const*) const'
+...
+```
+google查了后大概是高版本的gcc编译时需要c++11的支持，而默认的是不带的，所以需要重新编译与anaconda同版本的boost，再用新编译的lib文件替换原来的文件（不一定是最优的方案，但至少有效...）
+```shell
+./bootstrap.sh 
+./b2 toolset=gcc
+./b2 install --with-python include="~/anaconda3/include/python3.6m/"
+ldconfig -v
+./bootstrap.sh --with-libraries=python --with-toolset=gcc
+./b2 cflags='-fPIC' cxxflags='-fPIC' --with-python include="/root/anaconda3/include/python3.6m/"
+cp /home/boost-1.67.0/stage/lib/* /root/anaconda3/lib/
+```
+
+- 下载weiliu89的caffe并切换到ssd分支
+```shell
+cd /home && mkdir ssd && cd ssd
+git clone https://github.com/weiliu89/caffe.git
+cd caffe
+git checkout ssd
+```
+
+- 编译
+```shell
+make -j8
+# Make sure to include $CAFFE_ROOT/python to your PYTHONPATH.
+echo 'export PYTHONPATH="/home/ssd/caffe/python:$PYTHONPATH"' >> ~/.bashrc
+make py
+make test -j8
+```
+未报错即为安装成功
+
 ## 参考
 1. https://zoesxw.github.io/2018/07/14/caffe%E5%AE%89%E8%A3%85/
 2. https://blog.csdn.net/u012939880/article/details/82887985
+3. https://github.com/BVLC/caffe/issues/6043
+4. https://github.com/weiliu89/caffe/tree/ssd
