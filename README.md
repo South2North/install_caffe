@@ -1,4 +1,4 @@
-# # cuda:9.0-cudnn7-devel-ubuntu16.04 python3 docker 安装 caffe
+# cuda:9.0-cudnn7-devel-ubuntu16.04 python3 docker 安装 caffe
 ## 1.安装docker镜像
 ```shell
 sudo docker pull nvidia/cuda:9.0-cudnn7-devel-ubuntu16.04
